@@ -45,8 +45,7 @@ module Matcher
     MatcherNotCombinator.new(self)
   end
 
-  def bindear(un_objeto, diccionario)
-  end
+  def bindear(*)end
 
 end
 
@@ -184,7 +183,7 @@ class MatcherList
   include Matcher
 
   def initialize(una_lista, condicion = true)
-    @matchers = una_lista.map {|elem| !es_matcher(elem) ? val(elem) : elem}
+    @matchers = una_lista.map {|elem| es_matcher(elem) ? elem : val(elem)}
     @condicion = condicion
   end
 
