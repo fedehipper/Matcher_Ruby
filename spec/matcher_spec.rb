@@ -216,4 +216,32 @@ describe 'tests_tp_tadp_matcher' do
     end}.to raise_error(MatchError)
   end
 
+
+  it 'test entrega individual' do
+    expect((:a_string.if do length < 10 end).call("this is not a string")).to be(false)
+    expect((:a_string.if do length < 10 end).call("wololo")).to be(true)
+    expect((:a_number.if do even? end).call(42)).to be(true)
+    expect((:a_number.if do even? end).call(23)).to be(false)
+
+    expect(matches?([1,2,3]) do
+      with(list([:uno.if do odd? end, :dos, :tres])) {uno + dos + tres}
+      otherwise {1}
+    end).to eq(6)
+  end
+
+  it 'test entrega individual punto 2' do
+    expect{(:a_number.if do length? end).call(23)}.to raise_error(NoMethodError)
+    expect{(:a_number.if do even? end).call(Guerrero.new)}.to raise_error(NoMethodError)
+  end
+
+  it 'test entrega individual punto 3' do
+    expect(matches?(10) do
+      with(:a_number.if do odd? end) {a_number}
+      with(:a_number.if do even? end) {a_number * 2}
+      with(:a_number.if do nil? end) {a_number / 2}
+    end).to eq(20)
+  end
+
+
+
 end

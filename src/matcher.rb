@@ -1,19 +1,19 @@
 module Matcheadores
 
   def val(un_valor)
-    Matcher_val.new(un_valor)
+    MatcherVal.new(un_valor)
   end
 
   def type(un_tipo)
-    Matcher_type.new(un_tipo)
+    MatcherType.new(un_tipo)
   end
 
   def duck(*metodos)
-    Matcher_duck_typing.new(*metodos)
+    MatcherDuckTyping.new(*metodos)
   end
 
   def list(una_lista, *condicion)
-    Matcher_list.new(una_lista, *condicion)
+    MatcherList.new(una_lista, *condicion)
   end
 
 end
@@ -34,15 +34,15 @@ end
 module Matcher
 
   def and(*matchers)
-    Matcher_and_combinator.new(self, *matchers)
+    MatcherAndCombinator.new(self, *matchers)
   end
 
   def or(*matchers)
-    Matcher_or_combinator.new(self, *matchers)
+    MatcherOrCombinator.new(self, *matchers)
   end
 
   def not
-    Matcher_not_combinator.new(self)
+    MatcherNotCombinator.new(self)
   end
 
   def bindear(un_objeto, diccionario)
@@ -54,12 +54,16 @@ end
 class Symbol
   include Matcher
 
-  def call(valor)
+  def call(*)
     true
   end
 
   def bindear(un_objeto, diccionario)
     diccionario[self] = un_objeto
+  end
+
+  def if(&bloque)
+    MatcherIf.new(self, &bloque)
   end
 
 end
@@ -79,7 +83,7 @@ module Bindea
 end
 
 
-class Matcher_and_combinator
+class MatcherAndCombinator
   include Matcher
   include Bindea
 
@@ -90,7 +94,7 @@ class Matcher_and_combinator
 end
 
 
-class Matcher_or_combinator
+class MatcherOrCombinator
   include Matcher
   include Bindea
 
@@ -101,7 +105,7 @@ class Matcher_or_combinator
 end
 
 
-class Matcher_not_combinator
+class MatcherNotCombinator
   include Matcher
 
   def initialize(matcher)
@@ -115,7 +119,26 @@ class Matcher_not_combinator
 end
 
 
-class Matcher_val
+class MatcherIf
+  include Matcher
+
+  def initialize(un_simbolo, &bloque)
+    @simbolo = un_simbolo
+    @bloque = bloque
+  end
+
+  def call(objeto_matcheable)
+    objeto_matcheable.instance_eval(&@bloque)
+  end
+
+  def bindear(objeto_matcheable, diccionario)
+    diccionario[@simbolo] = objeto_matcheable
+  end
+
+end
+
+
+class MatcherVal
   include Matcher
 
   def initialize(un_valor)
@@ -129,7 +152,7 @@ class Matcher_val
 end
 
 
-class Matcher_type
+class MatcherType
   include Matcher
 
   def initialize(un_tipo)
@@ -143,7 +166,7 @@ class Matcher_type
 end
 
 
-class Matcher_duck_typing
+class MatcherDuckTyping
   include Matcher
 
   def initialize(*metodos)
@@ -157,7 +180,7 @@ class Matcher_duck_typing
 end
 
 
-class Matcher_list
+class MatcherList
   include Matcher
 
   def initialize(una_lista, condicion = true)
@@ -165,11 +188,11 @@ class Matcher_list
     @condicion = condicion
   end
 
-  private def es_matcher(un_objeto)
+  def es_matcher(un_objeto)
     un_objeto.class.ancestors.include? Matcher
   end
 
-  private def comparar_listas(lista)
+  def comparar_listas(lista)
     lista.all? {|un_matcher, otro_valor| un_matcher.call(otro_valor)}
   end
 
@@ -177,16 +200,15 @@ class Matcher_list
     unless otra_lista.is_a?(Array)
       return false
     end
-    lista = @matchers.zip(otra_lista)
     if @condicion
-      @matchers.size == otra_lista.size ? comparar_listas(lista) : false
+      @matchers.size == otra_lista.size ? comparar_listas(@matchers.zip(otra_lista)) : false
     else
-      comparar_listas(lista)
+      comparar_listas(@matchers.zip(otra_lista))
     end
   end
 
   def bindear(un_objeto, diccionario)
-    if call(un_objeto)          #call se fija si matchea
+    if call(un_objeto)
       @matchers.zip(un_objeto).each {|match_list, elem_list| match_list.bindear(elem_list, diccionario)}
     end
   end
@@ -202,18 +224,16 @@ class PatternMatchingContext
   end
 
   def with(*matchers, &bloque)
-    un_with = With.new(@objeto_matcheable, matchers, &bloque)
-    @lista_pattern << un_with
+    @lista_pattern << With.new(@objeto_matcheable, matchers, &bloque)
   end
 
   def otherwise(&bloque)
-    un_otherwise = Otherwise.new(&bloque)
-    @lista_pattern << un_otherwise
+    @lista_pattern << Otherwise.new(&bloque)
   end
 
   def matchear
-    aux = @lista_pattern.detect {|patron| patron.match}
-    aux != nil ? aux.call : (raise MatchError)
+    patron_cumple = @lista_pattern.detect {|patron| patron.match}
+    patron_cumple.nil? ? (raise MatchError) : patron_cumple.call
   end
 
 end
