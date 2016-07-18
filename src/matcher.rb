@@ -275,7 +275,7 @@ class Otherwise
   end
 
   def call
-    self.instance_eval &@bloque
+    self.instance_eval & @bloque
   end
 
   def match
