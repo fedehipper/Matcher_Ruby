@@ -242,6 +242,4 @@ describe 'tests_tp_tadp_matcher' do
     end).to eq(20)
   end
 
-
-
 end

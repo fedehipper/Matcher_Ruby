@@ -1,5 +1,4 @@
 module Matcheadores
-
   def val(un_valor)
     MatcherVal.new(un_valor)
   end
@@ -16,23 +15,21 @@ module Matcheadores
     MatcherList.new(una_lista, *condicion)
   end
 
+  def head_matcher(un_matcher)
+    Head_Matcher.new(un_matcher)
+  end
 end
-
 
 class Object
   include Matcheadores
-
   def matches?(un_objeto, &bloque)
     pattern_context = PatternMatchingContext.new(un_objeto)
     pattern_context.instance_eval &bloque
     pattern_context.matchear
   end
-
 end
 
-
 module Matcher
-
   def and(*matchers)
     MatcherAndCombinator.new(self, *matchers)
   end
@@ -45,14 +42,11 @@ module Matcher
     MatcherNotCombinator.new(self)
   end
 
-  def bindear(*)end
-
+  def bindear(*) end
 end
-
 
 class Symbol
   include Matcher
-
   def call(*)
     true
   end
@@ -64,12 +58,9 @@ class Symbol
   def if(&bloque)
     MatcherIf.new(self, &bloque)
   end
-
 end
 
-
 module Bindea
-
   def initialize(un_matcher, *matchers)
     @matchers = matchers
     @matchers << un_matcher
@@ -78,35 +69,26 @@ module Bindea
   def bindear(un_objeto, diccionario)
     @matchers.each {|matcher| matcher.bindear(un_objeto, diccionario)}
   end
-
 end
-
 
 class MatcherAndCombinator
   include Matcher
   include Bindea
-
   def call(un_objeto)
     @matchers.all? {|otro_matcher| otro_matcher.call(un_objeto)}
   end
-
 end
-
 
 class MatcherOrCombinator
   include Matcher
   include Bindea
-
   def call(un_objeto)
     @matchers.any? {|otro_matcher| otro_matcher.call(un_objeto)}
   end
-
 end
-
 
 class MatcherNotCombinator
   include Matcher
-
   def initialize(matcher)
     @matcher = matcher
   end
@@ -114,13 +96,10 @@ class MatcherNotCombinator
   def call(un_objeto)
     !@matcher.call(un_objeto)
   end
-
 end
-
 
 class MatcherIf
   include Matcher
-
   def initialize(un_simbolo, &bloque)
     @simbolo = un_simbolo
     @bloque = bloque
@@ -133,13 +112,10 @@ class MatcherIf
   def bindear(objeto_matcheable, diccionario)
     diccionario[@simbolo] = objeto_matcheable
   end
-
 end
-
 
 class MatcherVal
   include Matcher
-
   def initialize(un_valor)
     @valor = un_valor
   end
@@ -147,13 +123,10 @@ class MatcherVal
   def call(un_valor)
     @valor == un_valor
   end
-
 end
-
 
 class MatcherType
   include Matcher
-
   def initialize(un_tipo)
     @tipo = un_tipo
   end
@@ -161,13 +134,10 @@ class MatcherType
   def call(un_objeto)
     un_objeto.is_a? @tipo
   end
-
 end
-
 
 class MatcherDuckTyping
   include Matcher
-
   def initialize(*metodos)
     @metodos = metodos
   end
@@ -175,13 +145,10 @@ class MatcherDuckTyping
   def call(un_objeto)
     @metodos.all? {|un_metodo| un_objeto.respond_to?(un_metodo)}
   end
-
 end
-
 
 class MatcherList
   include Matcher
-
   def initialize(una_lista, condicion = true)
     @matchers = una_lista.map {|elem| es_matcher(elem) ? elem : val(elem)}
     @condicion = condicion
@@ -211,12 +178,9 @@ class MatcherList
       @matchers.zip(un_objeto).each {|match_list, elem_list| match_list.bindear(elem_list, diccionario)}
     end
   end
-
 end
 
-
 class PatternMatchingContext
-
   def initialize(un_objeto)
     @objeto_matcheable = un_objeto
     @lista_pattern = []
@@ -234,12 +198,9 @@ class PatternMatchingContext
     patron_cumple = @lista_pattern.detect {|patron| patron.match}
     patron_cumple.nil? ? (raise MatchError) : patron_cumple.call
   end
-
 end
 
-
 class With
-
   def initialize(objeto_matcheable, matchers, &bloque)
     @objeto_matcheable = objeto_matcheable
     @matchers = matchers
@@ -264,12 +225,9 @@ class With
     super unless @diccionario.has_key? sym
     @diccionario[sym]
   end
-
 end
 
-
 class Otherwise
-
   def initialize(&bloque)
     @bloque = bloque
   end
@@ -281,9 +239,7 @@ class Otherwise
   def match
     true
   end
-
 end
-
 
 class MatchError < StandardError
 end
