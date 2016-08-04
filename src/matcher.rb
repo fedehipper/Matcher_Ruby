@@ -14,10 +14,6 @@ module Matcheadores
   def list(una_lista, *condicion)
     MatcherList.new(una_lista, *condicion)
   end
-
-  def head_matcher(un_matcher)
-    Head_Matcher.new(un_matcher)
-  end
 end
 
 class Object
